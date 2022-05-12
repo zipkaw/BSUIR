@@ -33,7 +33,7 @@ void read_sb(struct struct_ext2_filsys file_sys)
     print_dash(5);
     printf("Reading super-block from device:");
     print_dash(5);
-    puts("\n\n");
+    puts("\n");
     printf("Inodes count            : %u\n"
            "Blocks count            : %u\n"
            "Reserved blocks count   : %u\n"
@@ -55,10 +55,11 @@ void read_sb(struct struct_ext2_filsys file_sys)
            file_sys.blocksize,
            sb->s_blocks_per_group,
            sb->s_inodes_per_group,
-           sb->s_creator_os == 0 ? "LINUX" : "Other OS",
+           sb->s_creator_os, //== 0 ? "LINUX" : "Other OS",
            sb->s_first_ino, /* first non-reserved inode */
            sb->s_inode_size);
     print_dash(20);  
+    puts(\n);
 };
 
 #endif //__INTERFACE__
