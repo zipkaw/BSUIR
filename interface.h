@@ -2,6 +2,7 @@
 #define __INTERFACE__
 
 #include "ext_source.h"
+#include "ext2_recovery.h"
 
 void print_dash(int count){
     for(int i = 0; i< count; i++){
@@ -59,7 +60,24 @@ void read_sb(struct struct_ext2_filsys file_sys)
            sb->s_first_ino, /* first non-reserved inode */
            sb->s_inode_size);
     print_dash(20);  
-    puts(\n);
+    puts("\n");
 };
+
+void print_deleted(struct struct_ext2_filsys filsys){ 
+    int size = 0;
+    unsigned int * read_inos = all_deleted_inodes(filsys, &size); 
+    struct ext2_inode inode; 
+    if(size > 0){
+        for(int i = 0; i < size; i++){
+            ext2fs_read_inode(&filsys, read_inos[i], &inode);
+            printf("%u. -inode- %u               -deleted time- %u\n", 
+                    i,
+                    read_inos[i], 
+                    inode.i_dtime);
+        }
+    }else{
+        puts("doesn't found deleted files");
+    }
+}
 
 #endif //__INTERFACE__
