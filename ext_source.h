@@ -21,6 +21,12 @@ const int pos[] = {1, 3, 5, 7, 9, 25, 27, 49, 81};
 
 //#define BLOCK_OFFSET(block) (BASE_OFFSET + (block - 1) * block_size)
 
+struct inode_d_time
+{
+    unsigned int inode;
+    unsigned int d_time; 
+};
+
 int check_super_block(int super_block_num, int block_size) {
     for(int i = 0; i < 9; i++){
         if((pos[i]*block_size) == super_block_num){

@@ -17,7 +17,7 @@ int main(int argc, char* argv[]){
     ext2fs_open(DEVICE_PATH, EXT2_FLAG_RW, 0, block_size, unix_io_manager, &file_system);
     /*output super block info*/
     read_sb(*file_system);
-
+    
     
 
 
