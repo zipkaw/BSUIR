@@ -2,6 +2,7 @@
 #define __EXT2_RECOVERY__
 
 #include "ext_source.h"
+#include "string_func.h"
 
 /*check all inode*/
 /*file write realization needed*/
@@ -51,28 +52,54 @@ int ret_d_inode_by_num(struct inode_d_time *d_inos, unsigned int inode, int i_si
     }
     return 0;
 }
-void recovery_file(struct struct_ext2_filsys filsys, unsigned int inode_n, struct inode_d_time *d_inos, int i_size)
+
+void recovery_file( 
+                    struct struct_ext2_filsys filsys, 
+                    unsigned int inode_n, 
+                    struct inode_d_time *d_inos, 
+                    int i_size, 
+                    int sfd /*source file descr, file should be open*/
+                    )
 {
     struct ext2_inode inode;
     ext2fs_read_inode(&filsys, inode_n, &inode);
 
     char file_name[100];
+    //char file_name[100];
 
     int fd = 0; 
     
     unsigned int file_size; 
     void* buff[filsys.blocksize];
+
+    /*creat filename*/
+    /*format [inode_n]_[d_time]*/
+    strcat(file_name, itoa(inode_n));
+    strcat(file_name, "_");
+    strcat(file_name, itoa(inode.i_dtime));
+    
     if((fd = creat(file_name, O_WRONLY | O_CREAT)) > 0){
         perror ("Can't create recovery file, exit...");
         exit(-1);
     }
+   
     /*to fix: 
     **correct buff size*/
+    /*fixed: 15.05*/
+    
+    int block_count;
+    if((inode.i_size / filsys.blocksize) > 0){
+        block_count = inode.i_size / filsys.blocksize;
+    } else if((inode.i_size / filsys.blocksize) == 0){
+        block_count == 1;
+    }
 
-    for(int i = 0; i< inode.i_blocks; i++){
+    for(int i = 0; i< block_count; i++){
         memset(buff, 0, filsys.blocksize);
-        memcpy(buff, inode.i_block[i], sizeof(inode.i_block[i]));
-        write(fd, buff, sizeof(inode.i_block[i]));
+        __u64 pos; 
+        pos = ((__u64)inode.i_block[i])*filsys.blocksize; 
+        pread64(sfd, buff, filsys.blocksize, inode.i_block[i]*filsys.blocksize);
+        write(fd, buff, filsys.blocksize);
     }
 
     close(fd);

@@ -8,7 +8,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
-
+#include <stdlib.h>
 //offset to superblock
 #define BASE_OFFSET 1024
 
@@ -16,7 +16,7 @@ const int pos[] = {1, 3, 5, 7, 9, 25, 27, 49, 81};
 //calculating group block
 #define GROUP_INDEX (inode_num, inodes_per_group) (return ((inode_num - 1)/inodes_per_group))
 
-//cdlculating inode index 
+//cdlculating inode index from inode table
 #define INODE_INDEX (inode_num, inodes_per_group) (return ((inode_num - 1)%inodes_per_group))
 
 //#define BLOCK_OFFSET(block) (BASE_OFFSET + (block - 1) * block_size)
