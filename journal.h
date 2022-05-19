@@ -40,17 +40,23 @@ typedef struct journal_header_s
 
 typedef struct journal_block_tag_s
 {
-
-    __be32 t_blocknr;      /* The on-disk block number */
-    __be16 t_checksum;     /* truncated crc32c(uuid+seq+block) */
-    __be16 t_flags;        /* See below */
+    __be32 t_blocknr;  /* The on-disk block number */
+    __be16 t_checksum; /* truncated crc32c(uuid+seq+block) */
+    __be16 t_flags;    /* See below */
+    // use only 64bit block numbers
     __be32 t_blocknr_high; /* most-significant high 32bits. */
-
 } journal_block_tag_t;
 
-typedef struct journal_descriptor_block {
-    journal_header_t d_header; /*0x0000*/
-    journal_block_tag_t* d_tag;  /*0x000C*/
+/* Definitions for the journal tag flags word: */
+#define JFS_FLAG_ESCAPE 1    /* on-disk block is escaped */
+#define JFS_FLAG_SAME_UUID 2 /* block has same uuid as previous */
+#define JFS_FLAG_DELETED 4   /* block deleted by this transaction */
+#define JFS_FLAG_LAST_TAG 8  /* last tag in this descriptor block */
+/*36bytes*/
+typedef struct journal_descriptor_block
+{
+    journal_header_t d_header;  /*0x0000*/
+    journal_block_tag_t *d_tag; /*0x000C*/
 } journal_descriptor_block_t;
 
 typedef struct journal_superblock_s

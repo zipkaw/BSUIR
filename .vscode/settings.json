@@ -3,6 +3,7 @@
         "ext_source.h": "c",
         "types.h": "c",
         "stat.h": "c",
-        "ext2fs.h": "c"
+        "ext2fs.h": "c",
+        "ext2_types.h": "c"
     }
 }

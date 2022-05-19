@@ -21,6 +21,7 @@ int main(int argc, char* argv[]){
     read_journal_sb(file_system, fd);
     close_device(fd);
     /*end*/
+    
     ext2fs_close(file_system);
     return 0;
 }

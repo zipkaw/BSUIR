@@ -4,7 +4,7 @@
 #include "ext2_recovery.h"
 #include "ext_source.h"
 #include "journal.h"
-
+#include "convertLE.h"
 /*
 **1.находим в какой групп блоков находится 
 **наш инод 
@@ -46,10 +46,17 @@
  * j_tag    ;on-disk blocknum
  * }
  */
+
+int read_file_write_to_journal(int fd_source, struct struct_ext2_filsys filsys){
+    struct ext2_inode inode;
+    ext2fs_read_inode(&filsys, EXT2_JOURNAL_INO, &inode);
+
+    __u32 pos = (inode.i_block[0])*(filsys.blocksize);
+}
+
 void open_journal_file(char* name, int* fd){
    *fd = open_device(name);
 };
-
 void read_journal(struct struct_ext2_filsys filsys){
     struct ext2_inode inode;
     ext2fs_read_inode(&filsys, EXT2_JOURNAL_INO, &inode);   
@@ -64,7 +71,7 @@ void read_journal_sb(struct struct_ext2_filsys* filsys, int fd){
     /*i dont know its work or no*/
     //j_sb = *((struct journal_superblock_s*)(buff));
     memset(&j_sb, 0, 68);
-    pread(fd, (char*)&j_sb, 68, pos);
+    pread(fd, &j_sb, 68, pos);
 
     printf(
             "Superblock info:\n"
@@ -74,13 +81,16 @@ void read_journal_sb(struct struct_ext2_filsys* filsys, int fd){
             "----Sequence   :0x%x\n" 
             "S_blocksize    :0x%x\n"
             "S_maxlen       :0x%x\n"
-            "First log inf  :0x%x\n",
-            j_sb.s_header.h_magic,
-            j_sb.s_header.h_blocktype,
-            j_sb.s_header.h_sequence,
-            j_sb.s_blocksize,
-            j_sb.s_maxlen, 
-            j_sb.s_first
+            "start log      :0x%x\n"
+            "journal size   :%u\n",
+            convert_from_num(j_sb.s_header.h_magic),
+            convert_from_num(j_sb.s_header.h_blocktype),
+            convert_from_num(j_sb.s_header.h_sequence),
+            convert_from_num(j_sb.s_blocksize),
+            convert_from_num(j_sb.s_maxlen), 
+            convert_from_num(j_sb.s_start),
+            inode.i_size
+
             );
     //free(buff);
 }
