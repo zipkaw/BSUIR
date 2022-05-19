@@ -6,18 +6,56 @@
 typedef unsigned int it; /*for inode type 32 bits num*/
 #define IBLOCK_SIZE 1024
 /*reading inode blocks in file*/
-read_inode_blocks(struct ext2_inode inode, int block_size, int fd)
+int read_ind_blocks();
+int read_dind_blocks();
+int read_tind_blocks();
+
+char *read_inode_blocks(struct ext2_inode inode, int block_size, int fd)
 {
     it size = inode.i_size;
     it count_blk = size / block_size;
     it count_offset_blks = block_size / 4;
+
+    it index = 0;
+    char inf_buff[block_size];
+
+    while (index <= EXT2_TIND_BLOCK)
+    {
+        if (index < EXT2_NDIR_BLOCKS)
+        {
+            it pos = inode.i_block[index] * block_size;
+            pread(fd, inf_buff, block_size, pos);
+            // write(inf_buff); SEEK_END;
+            index++;
+        }
+        switch (index)
+        {
+        case EXT2_IND_BLOCK:
+        {
+            read_ind_blocks();
+            break; 
+        }
+        case EXT2_DIND_BLOCK:
+        {
+            read_dind_blocks();
+            break;
+        }
+        case EXT2_TIND_BLOCK:
+        {
+            read_tind_blocks();
+            break;
+        }
+        default:
+            break;
+        }
+    }
 }
-read_inode_iblock(struct ext2_inode inode,
-                  int fd,
-                  unsigned int i_block_num,
-                  void *buf,
-                  struct ext2_super_block super,
-                  __u32 block_size)
+char *read_inode_iblock(struct ext2_inode inode,
+                        int fd,
+                        unsigned int i_block_num,
+                        void *buf,
+                        struct ext2_super_block super,
+                        __u32 block_size)
 {
     /*
     EXT2_NDIR_BLOCKS 0..11
@@ -83,22 +121,21 @@ read_inode_iblock(struct ext2_inode inode,
         it ddir_pos = inode.i_block[EXT2_DIND_BLOCK] * block_size;
         pread(fd, adr_buff, count_offset_blks, ddir_pos);
 
-        it i = 0;
-        for (it j = count_offset_blks; i < count_offset_blks; i++)
+        for (it i = 0; i < count_offset_blks; i++)
         {
-            if (id - j < 0)
+            if (id < count_offset_blks)
             {
+                it dir_pos = adr_buff[i] * block_size;
+                pread(fd, adr_buff, block_size, dir_pos);
+
                 break;
             }
             else
             {
-                j += count_offset_blks;
+                id -= count_offset_blks;
                 continue;
             }
         }
-
-        it dir_pos = adr_buff[i] * block_size;
-        pread(fd, adr_buff, block_size, dir_pos);
 
         it pos = adr_buff[id] * block_size;
         pread(fd, inf_buff, block_size, pos);
@@ -106,39 +143,51 @@ read_inode_iblock(struct ext2_inode inode,
     else if (i_block_num - fourth_lvl < 0)
     {
         it id = i_block_num - third_lvl - 1;
-        it count_d_offset_blocks = count_offset_blks * 2;
-        it ddir_pos = inode.i_block[EXT2_DIND_BLOCK] * block_size;
-        pread(fd, adr_buff, count_offset_blks, ddir_pos);
 
-        it a = 0;
-        it i = 0;
-        for (it b = count_d_offset_blocks; a < count_offset_blks; a++)
+        it count_d_offset_blocks = count_offset_blks * count_offset_blks;
+        it tdir_pos = inode.i_block[EXT2_TIND_BLOCK] * block_size;
+        pread(fd, adr_buff, count_offset_blks, tdir_pos);
+
+        // it d = 0;
+        // it i = 0;
+        for (it d = 0; d < count_offset_blks; d++)
         {
-            if (id - b < 0)
+            if (id < count_d_offset_blocks)
             {
-                //id = id - second_lvl - 1;
-                for (it j = count_offset_blks; i < count_offset_blks; i++)
+                it ddir_pos = adr_buff[d] * block_size;
+                pread(fd, adr_buff, count_offset_blks, ddir_pos);
+
+                for (it i = 0; i < count_offset_blks; i++)
                 {
-                    if (id - j < 0)
+                    if (id < count_offset_blks)
                     {
+                        it dir_pos = adr_buff[i] * block_size;
+                        pread(fd, adr_buff, block_size, dir_pos);
+                        goto read_info;
                         break;
                     }
                     else
                     {
-                        j += count_offset_blks;
+                        id -= count_offset_blks;
                         continue;
                     }
                 }
             }
             else
             {
-                b += count_d_offset_blocks;
+                id -= count_d_offset_blocks;
             }
         }
+    read_info:
+    {
+        it pos = adr_buff[id] * block_size;
+        pread(fd, inf_buff, block_size, pos);
+    }
     }
     else
     {
         fprintf(stderr, "BLOCK DOES NOT EXIST!");
         exit(-1);
     }
+    return inf_buff;
 }
