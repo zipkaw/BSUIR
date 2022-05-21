@@ -1,9 +1,10 @@
 #include "ext_source.h"
 #include "interface.h"
 #include "ext3_recovery.h"
+
 #define DEVICE_PATH "/dev/sda1"
 // struct struct_ext2_filsys* filesys;
-// unsigned int block_size = 0;
+unsigned int block_size = 0;
 int main(int argc, char *argv[])
 {
     // if(argc != 2){
@@ -13,14 +14,14 @@ int main(int argc, char *argv[])
     // unsigned int block_size = 0;
     // /*problem in read function:
     // **-fixed*/
-    // block_size = get_block_size(DEVICE_PATH);
-    // struct struct_ext2_filsys *file_system = malloc(sizeof(struct struct_ext2_filsys));
-    // ext2fs_open(DEVICE_PATH, EXT2_FLAG_RW, 0, block_size, unix_io_manager, &file_system);
-    // /*output super block info*/
-    // int fd = open_device(DEVICE_PATH);
-    // read_sb(*file_system);
-    // read_journal_sb(file_system, fd);
-    // struct ext2_inode inode;
+    block_size = get_block_size(DEVICE_PATH);
+    struct struct_ext2_filsys *file_system = malloc(sizeof(struct struct_ext2_filsys));
+    ext2fs_open(DEVICE_PATH, EXT2_FLAG_RW, 0, block_size, unix_io_manager, &file_system);
+    /*output super block info*/
+    int fd = open_device(DEVICE_PATH);
+    read_sb(*file_system);
+    read_journal_sb(file_system, fd);
+    struct ext2_inode inode;
     // ext2fs_read_inode(file_system, EXT2_JOURNAL_INO, &inode);
     // int j = 0;
     // while (getchar() != 27 && j < 11)
@@ -43,5 +44,10 @@ int main(int argc, char *argv[])
     // }
     // close_device(fd);
     // ext2fs_close(file_system);
+    // char buf[] = {0x9, 0x8, 0xc, 0x0};
+    // printf("----%x" , convert_from_num(0x98c0));
+    // printf("----%x" , convert_from_char(buf, 0)); 
+    read_journal(file_system, fd);
+
     return 0;
 }

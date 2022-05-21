@@ -4,6 +4,10 @@
         "types.h": "c",
         "stat.h": "c",
         "ext2fs.h": "c",
-        "ext2_types.h": "c"
+        "ext2_types.h": "c",
+        "reading_blocks.h": "c",
+        "string_func.h": "c",
+        "ext2_fs.h": "c",
+        "ext3_extents.h": "c"
     }
 }

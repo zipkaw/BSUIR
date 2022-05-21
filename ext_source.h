@@ -9,34 +9,37 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
-//offset to superblock
+// offset to superblock
 #define BASE_OFFSET 1024
 
 const int pos[] = {1, 3, 5, 7, 9, 25, 27, 49, 81};
-//calculating group block
-#define GROUP_INDEX (inode_num, inodes_per_group) (return ((inode_num - 1)/inodes_per_group))
+// calculating group block
+#define GROUP_INDEX (inode_num, inodes_per_group)(return ((inode_num - 1) / inodes_per_group))
 
-//cdlculating inode index from inode table
-#define INODE_INDEX (inode_num, inodes_per_group) (return ((inode_num - 1)%inodes_per_group))
+// cdlculating inode index from inode table
+#define INODE_INDEX (inode_num, inodes_per_group)(return ((inode_num - 1) % inodes_per_group))
 
 //#define BLOCK_OFFSET(block) (BASE_OFFSET + (block - 1) * block_size)
 
-struct inode_d_time
+typedef struct inode_d_time
 {
     unsigned int inode;
-    unsigned int d_time; 
-};
+    unsigned int d_time;
+} inode_d_time_t;
 
-int check_super_block(int super_block_num, int block_size) {
-    for(int i = 0; i < 9; i++){
-        if((pos[i]*block_size) == super_block_num){
+int check_super_block(int super_block_num, int block_size)
+{
+    for (int i = 0; i < 9; i++)
+    {
+        if ((pos[i] * block_size) == super_block_num)
+        {
             return 0;
         }
     }
     return 0;
 }
 
-int open_device(char* name)
+int open_device(char *name)
 {
     int fd = 0;
     if ((fd = open(name, O_RDONLY)) < 0)
@@ -44,7 +47,7 @@ int open_device(char* name)
         perror("cant open device file!");
         exit(-1);
     }
-    return fd; 
+    return fd;
 }
 
 void close_device(int fd)
@@ -56,7 +59,7 @@ void close_device(int fd)
     }
 }
 
-unsigned int get_block_size(char * name)
+unsigned int get_block_size(char *name)
 {
     int fd = open_device(name);
     int block_size = 0;
@@ -82,25 +85,50 @@ unsigned int get_block_size(char * name)
     return block_size;
 }
 
-
-int extXdetector(struct ext2_super_block super){
-    if (EXT2_SUPER_MAGIC != super.s_magic){
+int extXdetector(struct ext2_super_block super)
+{
+    if (EXT2_SUPER_MAGIC != super.s_magic)
+    {
         fprintf(stderr, "This not extfs, fs signature is %x", super.s_magic);
         exit(-1);
     }
-    int flag = 0; 
-    if((ext2fs_has_feature_xattr(&super) != 0) && (ext2fs_has_feature_sparse_super(&super)) != 0){
-        flag = 2; 
-    } 
-    if((ext2fs_has_feature_journal(&super) != 0) && (ext2fs_has_feature_dir_index(&super) != 0)){
-        flag = 3; 
+    int flag = 0;
+    if ((ext2fs_has_feature_xattr(&super) != 0) && (ext2fs_has_feature_sparse_super(&super)) != 0)
+    {
+        flag = 2;
     }
-    if((ext2fs_has_feature_64bit(&super) != 0) && (ext2fs_has_feature_extents(&super) != 0) &&
-        (ext2fs_has_feature_extra_isize(&super) != 0) && (ext2fs_has_feature_huge_file(&super) != 0)){
+    if ((ext2fs_has_feature_journal(&super) != 0) && (ext2fs_has_feature_dir_index(&super) != 0))
+    {
+        flag = 3;
+    }
+    if ((ext2fs_has_feature_64bit(&super) != 0) && (ext2fs_has_feature_extents(&super) != 0) &&
+        (ext2fs_has_feature_extra_isize(&super) != 0) && (ext2fs_has_feature_huge_file(&super) != 0))
+    {
         flag = 4;
     }
     return flag;
 }
 
+struct ext2_group_desc read_gd(struct struct_ext2_filsys filsys, int fd, int group)
+{
+    unsigned char buff_grp[4096];
+    if (lseek(fd, (filsys.super->s_first_data_block + 1) * filsys.blocksize, 0) < 0)
+    {
+        perror("lseek");
+        exit(-1);
+    }
+
+    if (read(fd, buff_grp, filsys.blocksize) < 0)
+    {
+        perror("read");
+        exit(-1);
+    }
+    struct ext2_group_desc gd;
+
+    memset((void *)&gd, 0, sizeof(gd));
+    memcpy((void *)&gd, buff_grp + (group * (sizeof(gd))), sizeof(gd));
+
+    return gd;
+}
 
 #endif //__EXT_SOURCE__

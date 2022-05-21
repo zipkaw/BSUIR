@@ -24,7 +24,7 @@
                 "isDefault": true
             },
             "detail": "Задача создана отладчиком.",
-            "sudo" : "true"
+            //"sudo" : "true"
         }
     ],
     "version": "2.0.0"
